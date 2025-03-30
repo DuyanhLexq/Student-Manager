@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QFont,QIcon
 from PyQt5.QtCore import Qt, QDate, QTimer,QSize
-from GUI.config import BACK_ICON_PATH
+from GUI.config import BACK_ICON_PATH,STUDENT_PAGE_ID
 
 class AddStudentPage(QWidget):
     def __init__(self, parent_stack=None):
@@ -215,4 +215,4 @@ class AddStudentPage(QWidget):
     
     def go_back(self):
         if self.parent_stack:
-            self.parent_stack.setCurrentIndex(0)
+            self.parent_stack.setCurrentIndex(STUDENT_PAGE_ID)
