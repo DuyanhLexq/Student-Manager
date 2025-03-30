@@ -8,11 +8,7 @@ from PyQt5.QtCore import Qt
 from GUI.home import HomePage
 from GUI.student import StudentPage
 from GUI.teacher import TeacherPage
-from GUI.config import (TEACHER_ICON_PATH,
-                        HOME_ICON_PATH,
-                        STUDENT_ICON_PATH,
-)
-
+from GUI.config import TEACHER_ICON_PATH, HOME_ICON_PATH, STUDENT_ICON_PATH
 from GUI.util import convert_icon_to_white
 
 class MainWindow(QMainWindow):
@@ -22,14 +18,16 @@ class MainWindow(QMainWindow):
         self.resize(1000, 600)
         self.initUI()
         self.loadStyleSheet()
-        # Tạo danh sách chứa tất cả các nút menu cần active style
+        # Danh sách chứa các nút menu cần active style
         self.all_menu_buttons = [
             self.btn_home,
             self.btn_students,
             self.btn_manage_students,
             self.btn_manage_grades,
             self.btn_manage_fees,
-            self.btn_teacher
+            self.btn_teacher,
+            self.btn_manage_teacher,
+            self.btn_teacher_salary
         ]
 
     def initUI(self):
@@ -82,7 +80,6 @@ class MainWindow(QMainWindow):
         submenu_layout = QVBoxLayout(self.submenu_students)
         submenu_layout.setContentsMargins(40, 0, 0, 0)  # Thụt vào để thể hiện quan hệ
         submenu_layout.setSpacing(5)
-
         self.btn_manage_students = QPushButton("Quản lý học sinh")
         self.btn_manage_grades = QPushButton("Quản lý điểm")
         self.btn_manage_fees = QPushButton("Học phí")
@@ -105,6 +102,22 @@ class MainWindow(QMainWindow):
         self.btn_teacher.setStyleSheet("color: #FFFFFF; background: transparent; border: none; text-align: left; padding-left: 20px;")
         menu_layout.addWidget(self.btn_teacher)
 
+        # Widget chứa submenu của Giáo viên (thụt vào)
+        self.submenu_teacher = QWidget()
+        teacher_sub_layout = QVBoxLayout(self.submenu_teacher)
+        teacher_sub_layout.setContentsMargins(40, 0, 0, 0)  # Thụt vào
+        teacher_sub_layout.setSpacing(5)
+        self.btn_manage_teacher = QPushButton("Quản lý giáo viên")
+        self.btn_teacher_salary = QPushButton("Lương")
+        for btn in [self.btn_manage_teacher, self.btn_teacher_salary]:
+            btn.setObjectName("SubMenuButton")
+            btn.setFont(QFont("Arial", 13))
+            btn.setFixedHeight(30)
+            btn.setStyleSheet("color: #FFFFFF; background: transparent; border: none; text-align: left;")
+            teacher_sub_layout.addWidget(btn)
+        self.submenu_teacher.hide()  # Ẩn submenu ban đầu
+        menu_layout.addWidget(self.submenu_teacher)
+
         menu_layout.addStretch()
 
         # Khu vực nội dung bên phải (QStackedWidget)
@@ -126,13 +139,20 @@ class MainWindow(QMainWindow):
         fee_label.setFont(QFont("Arial", 16))
         fee_layout.addWidget(fee_label)
         fee_layout.addStretch()
-        self.teacher_page = TeacherPage()
+        self.teacher_page = TeacherPage(main_stack=self.stack)
+        self.teacher_salary_page = QWidget()  # Placeholder cho quản lý lương
+        teacher_salary_layout = QVBoxLayout(self.teacher_salary_page)
+        teacher_salary_label = QLabel("Lương")
+        teacher_salary_label.setFont(QFont("Arial", 16))
+        teacher_salary_layout.addWidget(teacher_salary_label)
+        teacher_salary_layout.addStretch()
 
-        self.stack.addWidget(self.home_page)       # index 0
-        self.stack.addWidget(self.student_page)    # index 1
-        self.stack.addWidget(self.grade_page)        # index 2
-        self.stack.addWidget(self.fee_page)          # index 3
-        self.stack.addWidget(self.teacher_page)      # index 4
+        self.stack.addWidget(self.home_page)         # index 0
+        self.stack.addWidget(self.student_page)      # index 1
+        self.stack.addWidget(self.grade_page)          # index 2
+        self.stack.addWidget(self.fee_page)            # index 3
+        self.stack.addWidget(self.teacher_page)        # index 4
+        self.stack.addWidget(self.teacher_salary_page) # index 5
 
         main_layout.addWidget(self.menu_frame)
         main_layout.addWidget(self.stack)
@@ -143,17 +163,18 @@ class MainWindow(QMainWindow):
         self.btn_manage_students.clicked.connect(lambda: self.switch_page(self.student_page, self.btn_manage_students))
         self.btn_manage_grades.clicked.connect(lambda: self.switch_page(self.grade_page, self.btn_manage_grades))
         self.btn_manage_fees.clicked.connect(lambda: self.switch_page(self.fee_page, self.btn_manage_fees))
-        self.btn_teacher.clicked.connect(lambda: self.switch_page(self.teacher_page, self.btn_teacher))
+        self.btn_teacher.clicked.connect(lambda: self.toggle_teacher_menu())
+        self.btn_manage_teacher.clicked.connect(lambda: self.switch_page(self.teacher_page, self.btn_manage_teacher))
+        self.btn_teacher_salary.clicked.connect(lambda: self.switch_page(self.teacher_salary_page, self.btn_teacher_salary))
 
     def clear_active_styles(self):
-        # Xóa active style cho tất cả các nút menu
         for btn in self.all_menu_buttons:
             btn.setStyleSheet("color: #FFFFFF; background: transparent; font-weight: normal; text-align: left; padding-left: 20px;")
 
     def set_active_button(self, btn):
         self.clear_active_styles()
         # Active style: nền khác (#1F2A36) và chữ in đậm
-        btn.setStyleSheet("color: #FFFFFF; background-color: #1F2A36;text-align: left; padding-left: 20px;")
+        btn.setStyleSheet("color: #FFFFFF; background-color: #1F2A36; text-align: left; padding-left: 20px;")
 
     def switch_page(self, page, btn):
         self.stack.setCurrentWidget(page)
@@ -169,6 +190,16 @@ class MainWindow(QMainWindow):
             self.btn_students.setChecked(True)
             self.set_active_button(self.btn_students)
 
+    def toggle_teacher_menu(self):
+        if self.submenu_teacher.isVisible():
+            self.submenu_teacher.hide()
+            self.btn_teacher.setChecked(False)
+            self.set_active_button(self.btn_teacher)
+        else:
+            self.submenu_teacher.show()
+            self.btn_teacher.setChecked(True)
+            self.set_active_button(self.btn_teacher)
+
     def loadStyleSheet(self):
         try:
             with open("app/GUI/style.css", "r") as f:
@@ -182,5 +213,4 @@ def Run():
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
-
 
