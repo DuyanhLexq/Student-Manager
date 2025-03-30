@@ -1,0 +1,36 @@
+/* QSS cho MainWindow */
+QMainWindow {
+    background-color: #ECECEC;
+}
+
+/* Khung menu bên trái */
+#MenuFrame {
+    background-color: #2C3E50;
+}
+
+/* Icon user */
+#UserIcon {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+/* Nút menu */
+#MenuButton {
+    background-color: transparent;
+    color: #FFFFFF;
+    text-align: left;
+    padding-left: 20px;
+    border: none;
+}
+#MenuButton:hover {
+    background-color: #34495E;
+}
+#MenuButton:pressed {
+    background-color: #1F2A36;
+}
+
+/* Khu vực nội dung bên phải */
+#StackedWidget {
+    background-color: #F7F7F7;
+    border-left: 1px solid #CCCCCC;
+}
