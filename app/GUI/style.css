@@ -23,7 +23,8 @@ QMainWindow {
     border: none;
 }
 #MenuButton:hover {
-    background-color: #34495E;
+    font-weight: bold;
+    background-color: #1F2A36;
 }
 #MenuButton:pressed {
     background-color: #1F2A36;

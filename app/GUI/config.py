@@ -1,8 +1,13 @@
 #PATH
 TEACHER_ICON_PATH = "app/assets/teacher.png"
 STUDENT_ICON_PATH = "app/assets/student.png"
+CLASS_ICON_PATH = "app/assets/class.png"
+DATABASE_ICON_PATH = "app/assets/database.png"
+ACCOUNT_ICON_PATH = "app/assets/account.png"
+SETTING_ICON_PATH = "app/assets/setting.png"
 HOME_ICON_PATH = "app/assets/home.png"
 BACK_ICON_PATH = "app/assets/back.png"
+FILTER_ICON_PATH = "app/assets/filter.png"
 
 #PAGE
 HOME_PAGE_ID = 0
