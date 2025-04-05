@@ -8,6 +8,7 @@ from PyQt5.QtCore import Qt
 from GUI.home import HomePage
 from GUI.Student.student import StudentPage, GradesPage, TuitionPage
 from GUI.Teacher.teacher import TeacherPage, SalaryPage
+from GUI.Class._class import classPage
 from GUI.config import (TEACHER_ICON_PATH,
                         HOME_ICON_PATH, STUDENT_ICON_PATH, CLASS_ICON_PATH,
                         SETTING_ICON_PATH, DATABASE_ICON_PATH, ACCOUNT_ICON_PATH)
@@ -57,7 +58,7 @@ class MainWindow(QMainWindow):
         # Icon user (ở đầu menu)
         user_icon_label = QLabel()
         user_icon_label.setObjectName("UserIcon")
-        pixmap = QPixmap(r"C:\Project_Python\applications\Student-Manager\app\assets\user.jpg")
+        pixmap = QPixmap(r"C:\Project_Python\applications\Student-Manager\app\assets\user2.jpg")
         if not pixmap.isNull():
             # Tạo pixmap hình tròn với đường kính 80 (80/2 = 40 là bán kính)
             rounded_pixmap = get_rounded_pixmap(pixmap, 80)
@@ -128,7 +129,7 @@ class MainWindow(QMainWindow):
         self.fee_page = TuitionPage(main_stack=self.stack)
         self.teacher_page = TeacherPage(main_stack=self.stack)
         self.teacher_salary_page = SalaryPage(main_stack=self.stack)
-        self.class_management_page = QWidget()
+        self.class_management_page = classPage(main_stack= self.stack)
         self.settings_page = QWidget()
         self.data_page = QWidget()
         self.account_page = QWidget()

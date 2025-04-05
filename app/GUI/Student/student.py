@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QHBoxLayout, QLineEdit, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView, QCompleter, QDialog
+    QTableWidget, QTableWidgetItem, QHeaderView, QCompleter, QDialog,QMessageBox
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
@@ -67,17 +67,61 @@ class StudentPage(formPage):
         self.main_stack = main_stack
         super().__init__(
             [
-            ["HS001", "Nguyễn Văn A", "Nam", "15/03/2005"],
-            ["HS002", "Trần Thị B", "Nữ", "20/07/2006"],
-            ["HS003", "Lê Văn C", "Nam", "05/12/2005"],
-            ["HS004", "Phạm Thị D", "Nữ", "25/09/2004"]
-        ],
-        field= ["Chọn", "ID", "Tên", "Giới tính", "Ngày sinh"],
-        title= "Quản lý học sinh",
-        main_stack= self.main_stack,
-        search_text = "Tìm kiếm học sinh",
-        filter_fields = ["ID", "Tên", "Giới tính", "Ngày sinh"]
+                ["HS001", "Nguyễn Văn A", "Nam", "15/03/2005"],
+                ["HS002", "Trần Thị B", "Nữ", "20/07/2006"],
+                ["HS003", "Lê Văn C", "Nam", "05/12/2005"],
+                ["HS004", "Phạm Thị D", "Nữ", "25/09/2004"]
+            ],
+            field=["Chọn", "ID", "Tên", "Giới tính", "Ngày sinh"],
+            title="Quản lý học sinh",
+            main_stack=self.main_stack,
+            search_text="Tìm kiếm học sinh",
+            filter_fields=["ID", "Tên", "Giới tính", "Ngày sinh"]
         )
+    
+    def delete_student(self):
+        """
+        Ghi đè phương thức xóa học sinh để hiển thị hộp thoại xác nhận với thông báo:
+        - Nếu chỉ chọn 1 học sinh: "Xác nhận xóa học sinh [ID]- [Tên]?"
+        - Nếu chọn nhiều học sinh: liệt kê thông tin của các học sinh cần xóa.
+        """
+        selected_students = []
+        # Duyệt qua các dòng của bảng để lấy những dòng có checkbox được tích
+        for row in range(self.table.rowCount()):
+            checkbox_item = self.table.item(row, 0)
+            if checkbox_item and checkbox_item.checkState() == Qt.Checked:
+                # Lấy thông tin ID (cột 1) và Tên (cột 2)
+                student_id = self.table.item(row, 1).text() if self.table.item(row, 1) else ""
+                student_name = self.table.item(row, 2).text() if self.table.item(row, 2) else ""
+                selected_students.append((row, student_id, student_name))
+        
+        if not selected_students:
+            QMessageBox.information(self, "Thông báo", "Chưa chọn học sinh nào để xóa.")
+            return
+        
+        # Tạo thông báo xác nhận dựa trên số lượng học sinh được chọn
+        if len(selected_students) == 1:
+            _, student_id, student_name = selected_students[0]
+            confirmation_message = f"Xác nhận xóa học sinh {student_id}- {student_name}?"
+        else:
+            details = "\n".join([f"{stud_id}- {stud_name}" for (_, stud_id, stud_name) in selected_students])
+            confirmation_message = f"Xác nhận xóa các học sinh:\n{details}"
+        
+        reply = QMessageBox.question(
+            self, 
+            "Xác nhận xóa", 
+            confirmation_message,
+            QMessageBox.Yes | QMessageBox.No, 
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            # Xóa các dòng từ dưới lên để tránh làm lệch thứ tự
+            for row, _, _ in reversed(selected_students):
+                self.table.removeRow(row)
+            print("Đã xóa các mục đã chọn.")
+        else:
+            print("Hủy xóa.")
 
     
     def go_to_add_page(self):

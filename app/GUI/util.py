@@ -2,14 +2,14 @@ from PyQt5.QtGui import QPixmap, QPainter, QIcon,QPainterPath
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QHBoxLayout, QLineEdit, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView, QCompleter, QDialog,QComboBox,QSpacerItem,QSizePolicy
+    QTableWidget, QTableWidgetItem, QHeaderView, QCompleter, QDialog,QComboBox,QSpacerItem,QSizePolicy,QMessageBox
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from typing import List
-from GUI.config import FILTER_ICON_PATH
+from GUI.config import FILTER_ICON_PATH,REFRESH_ICON_PATH
 import datetime
 
 
@@ -94,9 +94,14 @@ class formPage(QWidget):
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText(f"{self.search_text}...")
         self.search_input.setFixedHeight(30)
-        # Giả sử dữ liệu tìm kiếm ở cột đầu tiên của sample_data (có thể điều chỉnh lại)
-        name_list = [row[0] if len(row) > 0 else "" for row in self.sample_data]
-        completer = QCompleter(name_list)
+        # Tạo danh sách gợi ý từ tất cả các field (trừ cột "Chọn" nếu có)
+        suggestions = set()
+        for row in self.sample_data:
+            # Nếu có cột "Chọn", giả sử dữ liệu thực bắt đầu từ index 0 của row
+            for cell in row:
+                if cell.strip():
+                    suggestions.add(cell)
+        completer = QCompleter(sorted(list(suggestions)))
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.search_input.setCompleter(completer)
         self.search_input.returnPressed.connect(self.search_student)
@@ -119,8 +124,19 @@ class formPage(QWidget):
         # Khu vực Filter (đặt bên phải, ngay dưới các nút chức năng)
         if self.filter_fields:
             filter_layout = QHBoxLayout()
+            # Thêm nút Refresh bên trái
+            self.refresh_button = QPushButton()
+            self.refresh_button.setIcon(QIcon(REFRESH_ICON_PATH))
+            self.refresh_button.setIconSize(self.refresh_button.sizeHint())
+            self.refresh_button.setFixedSize(30, 30)
+            self.refresh_button.setCursor(Qt.PointingHandCursor)
+            self.refresh_button.clicked.connect(self.refresh_table)
+            filter_layout.addWidget(self.refresh_button)
+            
+            # Spacer để đẩy các thành phần về phía bên phải
             spacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
             filter_layout.addItem(spacer)
+            
             # ComboBox filter với kích thước tối thiểu
             self.filter_combo = QComboBox()
             self.filter_combo.addItems(self.filter_fields)
@@ -131,7 +147,6 @@ class formPage(QWidget):
             self.filter_button = QPushButton()
             self.filter_button.setIcon(QIcon(FILTER_ICON_PATH))
             self.filter_button.setIconSize(self.filter_button.sizeHint())
-            # Đặt kích thước cố định cho nút (ví dụ 30x30)
             self.filter_button.setFixedSize(30, 30)
             self.filter_button.setCursor(Qt.PointingHandCursor)
             self.filter_button.clicked.connect(self.filter_table)
@@ -163,7 +178,9 @@ class formPage(QWidget):
             for col in range(1, num_cols):
                 data_index = col - 1  # data_row[0] -> bảng cột 1, data_row[1] -> bảng cột 2, ...
                 if data_index < len(data_row):
-                    self.table.setItem(row, col, QTableWidgetItem(data_row[data_index]))
+                    item = QTableWidgetItem(data_row[data_index])
+                    item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)  # không Editable
+                    self.table.setItem(row, col, item)
         main_layout.addWidget(self.table)
 
         # Kết nối sự kiện cho các nút
@@ -189,14 +206,24 @@ class formPage(QWidget):
     """
         for btn in [self.add_button, self.edit_button, self.delete_button, self.chart_button]:
             btn.setStyleSheet(button_style)
+        if hasattr(self, 'refresh_button'):
+            self.refresh_button.setStyleSheet(button_style)
+        if hasattr(self, 'filter_button'):
+            self.filter_button.setStyleSheet(button_style)
 
     def search_student(self):
-        query = self.search_input.text().strip()
+        query = self.search_input.text().strip().lower()
         print(f"{self.search_text}: {query}")
-        # Tìm kiếm theo cột thứ 2 (với checkbox là cột 0)
+        # Tìm kiếm theo tất cả các field (bỏ qua cột "Chọn" ở cột 0)
         for row in range(self.table.rowCount()):
-            item = self.table.item(row, 2)
-            if item and query.lower() in item.text().lower():
+            match = False
+            # Duyệt qua các cột từ cột 1 trở đi
+            for col in range(1, self.table.columnCount()):
+                item = self.table.item(row, col)
+                if item and query in item.text().lower():
+                    match = True
+                    break
+            if match:
                 self.table.showRow(row)
             else:
                 self.table.hideRow(row)
@@ -226,6 +253,13 @@ class formPage(QWidget):
         self.table.sortItems(col_index, Qt.AscendingOrder)
         print(f"Bảng đã được sắp xếp theo {selected_field} (tăng dần).")
 
+    def refresh_table(self):
+        """Làm mới bảng: xóa nội dung tìm kiếm và hiển thị lại tất cả các dòng."""
+        self.search_input.clear()
+        for row in range(self.table.rowCount()):
+            self.table.showRow(row)
+        print("Bảng đã được làm mới.")
+
     def go_to_add_page(self):
         if self.main_stack:
             print("Chuyển sang trang thêm mới")
@@ -240,4 +274,22 @@ class formPage(QWidget):
         print("Sửa thông tin học sinh")
 
     def delete_student(self):
-        print("Xóa học sinh")
+        # Lấy nội dung thông báo xác nhận từ thuộc tính của lớp kế thừa, nếu không có thì dùng giá trị mặc định
+        confirmation_message = getattr(self, "delete_confirmation_message", "Bạn có chắc chắn muốn xóa các mục đã chọn?")
+        
+        # Hiển thị hộp thoại xác nhận xóa
+        reply = QMessageBox.question(self, "Xác nhận xóa", confirmation_message,
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        
+        if reply == QMessageBox.Yes:
+            # Lấy danh sách các dòng cần xóa (chạy từ dưới lên để tránh lỗi khi xóa)
+            rows_to_delete = []
+            for row in range(self.table.rowCount()):
+                checkbox_item = self.table.item(row, 0)
+                if checkbox_item and checkbox_item.checkState() == Qt.Checked:
+                    rows_to_delete.append(row)
+            for row in reversed(rows_to_delete):
+                self.table.removeRow(row)
+            print("Đã xóa các mục đã chọn.")
+        else:
+            print("Hủy xóa.")
