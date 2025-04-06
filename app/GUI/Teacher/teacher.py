@@ -6,17 +6,17 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from GUI.Teacher.addTeacher_func import AddTeacherPage
-from GUI.util import formPage
-
+from GUI.util import formPage,get_right_table_data_form
+from functions.functions import get_preview_data
+from sqlQuery import GET_PREVIEW_SALARY_DATA_QUERY,GET_PREVIEW_TEACHER_DATA_QUERY
+from typing import List
 class TeacherPage(formPage):
     def __init__(self, main_stack=None):
         self.main_stack = main_stack
+        self.preview_data = get_right_table_data_form(get_preview_data(GET_PREVIEW_TEACHER_DATA_QUERY))
+        
         super().__init__(
-            data=[
-                ["GV001", "Nguyễn Văn A", "01/01/1980", "2010"],
-                ["GV002", "Trần Thị B", "05/03/1985", "2012"],
-                ["GV003", "Lê Văn C", "12/07/1978", "2008"]
-            ],
+            data= self.preview_data,
             field=["Chọn", "ID", "Tên giáo viên", "Ngày sinh", "Năm vào làm việc"],
             title="Quản lý giáo viên",
             main_stack=self.main_stack,
@@ -36,19 +36,12 @@ class TeacherPage(formPage):
 class SalaryPage(formPage):
     def __init__(self,main_stack = None):
         self.main_stack  = main_stack
+        self.preview_data = get_right_table_data_form(get_preview_data(GET_PREVIEW_SALARY_DATA_QUERY))
         super().__init__(
-            [
-                ["GV001","Nguyễn Văn A","100$","2$"],
-                ["GV002", "Trần Thị B", "120$", "1$"],
-                ["GV003", "Lê Văn C", "110$", "3$"]
-
-            ],
+            self.preview_data,
             ["Chọn", "ID", "Tên giáo viên", "Lương", "Lương thưởng"],
             title= "Quản lý lương giáo viên",
             main_stack= self.main_stack,
             search_text = "Tìm kiếm giáo viên",
             filter_fields = ["ID","Tên giáo viên","Lương","Lương thưởng"]
         )
-    
-
-

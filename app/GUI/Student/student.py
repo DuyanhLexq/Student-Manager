@@ -6,8 +6,11 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from GUI.Student.addStudent_func import AddStudentPage  # Import widget thêm học sinh
 from GUI.util import formPage
+from GUI.util import formPage,get_right_table_data_form
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from functions.functions import get_preview_data
+from sqlQuery import GET_PREVIEW_STUDENT_DATA_QUERY,GET_GRADES_DATA_QUERY,GET_TUITION_DATA_QUERY
 import datetime
 
 class ChartWindow(QDialog):
@@ -65,13 +68,9 @@ class StudentPage(formPage):
         main_stack: QStackedWidget chứa các trang của ứng dụng, dùng để chuyển trang.
         """
         self.main_stack = main_stack
+        self.preview_data = get_right_table_data_form(get_preview_data(GET_PREVIEW_STUDENT_DATA_QUERY))
         super().__init__(
-            [
-                ["HS001", "Nguyễn Văn A", "Nam", "15/03/2005"],
-                ["HS002", "Trần Thị B", "Nữ", "20/07/2006"],
-                ["HS003", "Lê Văn C", "Nam", "05/12/2005"],
-                ["HS004", "Phạm Thị D", "Nữ", "25/09/2004"]
-            ],
+            self.preview_data,
             field=["Chọn", "ID", "Tên", "Giới tính", "Ngày sinh"],
             title="Quản lý học sinh",
             main_stack=self.main_stack,
@@ -138,13 +137,9 @@ class GradesPage(formPage):
         main_stack: QStackedWidget chứa các trang của ứng dụng, dùng để chuyển trang.
         """
         self.main_stack = main_stack
+        self.preview_data = get_right_table_data_form(get_preview_data(GET_GRADES_DATA_QUERY))
         super().__init__(
-            [
-            ["HS001", "Nguyễn Văn A", "10"],
-            ["HS002", "Trần Thị B", "10"],
-            ["HS003", "Lê Văn C", "10"],
-            ["HS004", "Phạm Thị D", "10"]
-        ],
+        self.preview_data,
         field= ["Chọn", "ID", "Tên", "Điểm"],
         title= "Quản lý điểm",
         main_stack =  self.main_stack,
@@ -155,13 +150,9 @@ class GradesPage(formPage):
 class TuitionPage(formPage):
     def __init__(self, main_stack = None):
         self.main_stack = main_stack
+        self.preview_data = get_right_table_data_form(get_preview_data(GET_TUITION_DATA_QUERY))
         super().__init__(
-            [
-            ["HS001", "Nguyễn Văn A", "10.000.000","Đã đóng"],
-            ["HS002", "Trần Thị B", "10.000.000","Chưa đóng"],
-            ["HS003", "Lê Văn C", "10.000.000","Đã đóng"],
-            ["HS004", "Phạm Thị D", "10.000.000","Chưa đóng"]
-        ],
+        self.preview_data,
         field= ["Chọn", "ID", "Tên", "Học phí","Đóng"],
         title= "Quản lý học phí",
         main_stack= self.main_stack,

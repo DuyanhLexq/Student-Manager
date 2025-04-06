@@ -8,7 +8,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from typing import List
+from typing import List,Union
 from GUI.config import FILTER_ICON_PATH,REFRESH_ICON_PATH
 import datetime
 
@@ -31,6 +31,13 @@ def convert_icon_to_white(icon_path:str) -> QPixmap:
     painter.fillRect(white_pixmap.rect(), Qt.white)
     painter.end()
     return white_pixmap
+
+def get_right_table_data_form(data: List[tuple[str]]) -> List[List[str]]:
+    res = []
+    for dt in data:
+        accurate_data = list(map(lambda value: str(value), dt))
+        res.append(accurate_data)
+    return res
 
 def get_rounded_pixmap(pixmap, diameter):
     # Tạo một QPixmap mới với kích thước và nền trong suốt
