@@ -2,13 +2,13 @@ from PyQt5.QtGui import QPixmap, QPainter, QIcon,QPainterPath
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QHBoxLayout, QLineEdit, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView, QCompleter, QDialog,QComboBox,QSpacerItem,QSizePolicy,QMessageBox
+    QTableWidget, QTableWidgetItem, QHeaderView, QCompleter, QDialog,QComboBox,QSpacerItem,QSizePolicy,QMessageBox,QApplication
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from typing import List,Union
+from typing import List,Union,Optional
 from GUI.config import FILTER_ICON_PATH,REFRESH_ICON_PATH
 import datetime
 
@@ -65,6 +65,7 @@ class formPage(QWidget):
                  field: List[str],
                  title: str,
                  main_stack=None,
+                 single_select:bool = False,
                  **args):
         """
         :param data: Dữ liệu mẫu của bảng, mỗi phần tử là một danh sách các giá trị cho các field.
@@ -80,6 +81,7 @@ class formPage(QWidget):
         self.main_stack = main_stack
         self.field = field
         self.title = title
+        self.single_select = single_select
         self.search_text = args.get("search_text", "Tìm kiếm")
         self.filter_fields = args.get("filter_fields", [])
         self.initUI()
@@ -192,8 +194,9 @@ class formPage(QWidget):
 
         # Kết nối sự kiện cho các nút
         self.add_button.clicked.connect(self.go_to_add_page)
-        self.edit_button.clicked.connect(self.edit_student)
-        self.delete_button.clicked.connect(self.delete_student)
+        self.edit_button.clicked.connect(self.go_to_edit_page)
+        self.delete_button.clicked.connect(self.delete)
+        self.table.itemChanged.connect(self.handle_single_selection)
 
     def applyStyles(self):
         button_style = """
@@ -217,6 +220,23 @@ class formPage(QWidget):
             self.refresh_button.setStyleSheet(button_style)
         if hasattr(self, 'filter_button'):
             self.filter_button.setStyleSheet(button_style)
+    
+    def handle_single_selection(self, item):
+        if not self.single_select or item.column() != 0:
+            return
+
+        # Nếu checkbox được check
+        if item.checkState() == Qt.Checked:
+            modifiers = QApplication.keyboardModifiers()
+            allow_multi = modifiers & (Qt.ShiftModifier | Qt.ControlModifier)
+
+            if not allow_multi:
+                # Bỏ chọn tất cả dòng khác
+                for row in range(self.table.rowCount()):
+                    current_item = self.table.item(row, 0)
+                    if current_item is not item:
+                        current_item.setCheckState(Qt.Unchecked)
+
 
     def search_student(self):
         query = self.search_input.text().strip().lower()
@@ -264,6 +284,10 @@ class formPage(QWidget):
         """Làm mới bảng: xóa nội dung tìm kiếm và hiển thị lại tất cả các dòng."""
         self.search_input.clear()
         for row in range(self.table.rowCount()):
+            checkbox_item = QTableWidgetItem()
+            checkbox_item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+            checkbox_item.setCheckState(Qt.Unchecked)
+            self.table.setItem(row, 0, checkbox_item)
             self.table.showRow(row)
         print("Bảng đã được làm mới.")
 
@@ -276,26 +300,73 @@ class formPage(QWidget):
             # self.main_stack.setCurrentWidget(add_page_instance)
         else:
             print("Main stack chưa được cung cấp!")
+    
+    def get_id_selected(self) -> Optional[str]:
+        # Lấy danh sách các dòng được chọn qua checkbox
+        selected_rows = []
+        for row in range(self.table.rowCount()):
+            checkbox_item = self.table.item(row, 0)
+            if checkbox_item and checkbox_item.checkState() == Qt.Checked:
+                selected_rows.append(row)
+        
+        # Kiểm tra: chỉ cho phép sửa khi chọn đúng 1 giáo viên
+        if len(selected_rows) != 1:
+            QMessageBox.warning(self, "Lỗi", "Vui lòng chọn đúng 1 đối tượng để sửa thông tin!")
+            return
 
-    def edit_student(self):
+        selected_row = selected_rows[0]
+        # Giả sử cột 1 chứa ID của giáo viên
+        id_item = self.table.item(selected_row, 1)
+        if id_item is None:
+            QMessageBox.warning(self, "Lỗi", "Không tìm thấy thông tin ID!")
+            return
+
+        _id = id_item.text()
+        print(f"Sửa thông tin có ID: {_id}")
+        return _id
+
+
+    def go_to_edit_page(self):
         print("Sửa thông tin học sinh")
 
-    def delete_student(self):
-        # Lấy nội dung thông báo xác nhận từ thuộc tính của lớp kế thừa, nếu không có thì dùng giá trị mặc định
-        confirmation_message = getattr(self, "delete_confirmation_message", "Bạn có chắc chắn muốn xóa các mục đã chọn?")
+    def delete(self):
+        """Xóa các dòng được chọn trong bảng.
+        Nếu không có dòng nào được chọn, hiển thị thông báo.
+        Nếu có nhiều dòng được chọn, hiển thị thông báo xác nhận với danh sách các học sinh được chọn.
+        Nếu chỉ có một dòng được chọn, hiển thị thông báo xác nhận với thông tin của học sinh đó.
+        """
+        selected = []
+        # Duyệt qua các dòng của bảng để lấy những dòng có checkbox được tích
+        for row in range(self.table.rowCount()):
+            checkbox_item = self.table.item(row, 0)
+            if checkbox_item and checkbox_item.checkState() == Qt.Checked:
+                # Lấy thông tin ID (cột 1) và Tên (cột 2)
+                _id = self.table.item(row, 1).text() if self.table.item(row, 1) else ""
+                selected.append((row,_id))
         
-        # Hiển thị hộp thoại xác nhận xóa
-        reply = QMessageBox.question(self, "Xác nhận xóa", confirmation_message,
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if not selected:
+            QMessageBox.information(self, "Thông báo", "Chưa chọn phần tử nào để xóa.")
+            return
+        
+        # Tạo thông báo xác nhận dựa trên số lượng học sinh được chọn
+        if len(selected) == 1:
+            _id= selected[0][1]
+            confirmation_message = f"Xác nhận xóa phần tử có ID là {_id}?"
+        else:
+            details = "\n".join([f"ID-{_id}" for (_,_id) in selected])
+            confirmation_message = f"Xác nhận xóa các phần tử có ID:\n{details}"
+        
+        reply = QMessageBox.question(
+            self, 
+            "Xác nhận xóa", 
+            confirmation_message,
+            QMessageBox.Yes | QMessageBox.No, 
+            QMessageBox.No
+        )
         
         if reply == QMessageBox.Yes:
-            # Lấy danh sách các dòng cần xóa (chạy từ dưới lên để tránh lỗi khi xóa)
-            rows_to_delete = []
-            for row in range(self.table.rowCount()):
-                checkbox_item = self.table.item(row, 0)
-                if checkbox_item and checkbox_item.checkState() == Qt.Checked:
-                    rows_to_delete.append(row)
-            for row in reversed(rows_to_delete):
+            # Xóa các dòng từ dưới lên để tránh làm lệch thứ tự
+            for row,_ in reversed(selected):
                 self.table.removeRow(row)
             print("Đã xóa các mục đã chọn.")
         else:

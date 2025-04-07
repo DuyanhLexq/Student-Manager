@@ -2,10 +2,14 @@
 import logging
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
+    QDateEdit, QDialog, QFrame
 )
 from PyQt5.QtGui import QFont, QIcon
-from PyQt5.QtCore import QSize
+from PyQt5.QtCore import Qt, QDate, QTimer, QSize
 from GUI.config import BACK_ICON_PATH, TEACHER_SALARY_PAGE_ID
+from GUI.util import get_right_table_data_form
+from functions.functions import get_preview_data
+from sqlQuery import GET_SALARY_DATA_BY_ID_QUERY
 from GUI.notification import FloatingNotification
 
 # Configure module-level logging
@@ -13,34 +17,46 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class AddSalaryPage(QWidget):
+class AlterSalaryPage(QWidget):
     """
-    A page for adding teacher salary information.
+    A page for editing teacher salary information.
 
     Attributes:
         parent_stack: The QStackedWidget used for navigation between pages.
+        salary_data: A list containing the teacher's salary data, retrieved from the database.
+                     Expected format: [Tên Giáo viên, Lương, Lương thưởng]
     """
-    def __init__(self, parent_stack=None):
+
+    def __init__(self, parent_stack=None, teacher_id=None):
         """
-        Initializes the AddSalaryPage.
+        Initializes the AlterSalaryPage.
 
         Args:
             parent_stack: The parent QStackedWidget for navigation.
+            teacher_id (str): The teacher's ID to load the salary data for editing.
         """
         super().__init__()
         self.parent_stack = parent_stack
+        try:
+            raw_data = get_preview_data(GET_SALARY_DATA_BY_ID_QUERY.format(teacher_id))
+            salary_list = get_right_table_data_form(raw_data)
+            self.salary_data = salary_list[0] if salary_list else None
+            logger.info("Salary data loaded successfully for teacher ID: %s", teacher_id)
+        except Exception as e:
+            logger.error("Error retrieving salary data for teacher ID %s: %s", teacher_id, e)
+            self.salary_data = None
         self.initUI()
 
     def initUI(self):
         """
-        Sets up the user interface for adding teacher salary information.
+        Sets up the user interface for editing teacher salary information.
         """
         # Set common font for the form
         self.setFont(QFont("Arial", 14))
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(15)
-        
+
         # Top layout: Back button
         top_layout = QHBoxLayout()
         self.back_button = QPushButton()
@@ -52,58 +68,59 @@ class AddSalaryPage(QWidget):
         top_layout.addWidget(self.back_button)
         top_layout.addStretch()
         layout.addLayout(top_layout)
-        
-        # Row 1: Teacher Name (required)
+
+        # Row 1: Teacher Name (readonly)
         row1 = QHBoxLayout()
-        label_name = QLabel('Tên Giáo viên <span style="color:red; font-size:16px;">*</span>')
+        label_name = QLabel("Tên Giáo viên")
         label_name.setFont(QFont("Arial", 14))
         self.name_input = QLineEdit()
-        self.name_input.setPlaceholderText("Nhập tên giáo viên")
+        self.name_input.setText(self.salary_data[0] if self.salary_data else "")
+        self.name_input.setReadOnly(True)
         self.name_input.setFixedHeight(30)
         row1.addWidget(label_name)
         row1.addWidget(self.name_input)
         layout.addLayout(row1)
-        
+
         # Row 2: Salary (required)
         row2 = QHBoxLayout()
-        label_salary = QLabel('Lương <span style="color:red; font-size:16px;">*</span>')
+        label_salary = QLabel("Lương")
         label_salary.setFont(QFont("Arial", 14))
         self.salary_input = QLineEdit()
-        self.salary_input.setPlaceholderText("Nhập lương")
+        self.salary_input.setText(self.salary_data[1] if self.salary_data else "")
         self.salary_input.setFixedHeight(30)
         row2.addWidget(label_salary)
         row2.addWidget(self.salary_input)
         layout.addLayout(row2)
-        
+
         # Row 3: Bonus (optional)
         row3 = QHBoxLayout()
         label_bonus = QLabel("Lương thưởng")
         label_bonus.setFont(QFont("Arial", 14))
         self.bonus_input = QLineEdit()
-        self.bonus_input.setPlaceholderText("Nhập lương thưởng")
+        self.bonus_input.setText(self.salary_data[2] if self.salary_data else "")
         self.bonus_input.setFixedHeight(30)
         row3.addWidget(label_bonus)
         row3.addWidget(self.bonus_input)
         layout.addLayout(row3)
         layout.addStretch()
-        
-        # Bottom layout: "Thêm" button
+
+        # Bottom layout: "Sửa" button
         bottom_layout = QHBoxLayout()
         bottom_layout.addStretch()
-        self.add_button = QPushButton("Thêm")
+        self.add_button = QPushButton("Sửa")
         self.add_button.setFixedSize(150, 40)
         self.add_button.setFont(QFont("Arial", 14))
-        self.add_button.setEnabled(False)
-        self.add_button.setStyleSheet("background-color: #A9A9A9; color: white; border-radius: 8px")
+        self.add_button.setEnabled(True)
+        self.add_button.setStyleSheet("background-color: #007BFF; color: white; border-radius: 8px")
         self.add_button.clicked.connect(self.add_salary)
         bottom_layout.addWidget(self.add_button)
         layout.addLayout(bottom_layout)
-        
+
         # Connect signals for input validation
         self.name_input.textChanged.connect(self.check_input)
         self.salary_input.textChanged.connect(self.check_input)
-        
-        logger.info("AddSalaryPage UI initialized.")
+
+        logger.info("AlterSalaryPage UI initialized.")
 
     def check_input(self):
         """
@@ -113,37 +130,37 @@ class AddSalaryPage(QWidget):
         if self.name_input.text().strip() and self.salary_input.text().strip():
             self.add_button.setEnabled(True)
             self.add_button.setStyleSheet("background-color: #007BFF; color: white; border-radius: 8px")
-            logger.debug("Input validation passed; submit button enabled.")
+            logger.debug("Input validation passed; button enabled.")
         else:
             self.add_button.setEnabled(False)
             self.add_button.setStyleSheet("background-color: #A9A9A9; color: white; border-radius: 8px")
-            logger.debug("Input validation failed; submit button disabled.")
+            logger.debug("Input validation failed; button disabled.")
 
     def add_salary(self):
         """
-        Processes the entered salary information.
+        Processes the salary information entered by the user.
         Logs the information and displays a floating notification upon success.
         """
         name = self.name_input.text().strip()
         salary = self.salary_input.text().strip()
         bonus = self.bonus_input.text().strip()
-        logger.info("Thêm lương: %s, %s, %s", name, salary, bonus)
-        # Here you would typically insert the salary data into the database.
+        logger.info("Sửa lương: %s, %s, %s", name, salary, bonus)
+        # Here you can add the logic to update the salary in the database.
         self.show_notification()
 
     def show_notification(self):
         """
-        Displays a floating notification indicating that the salary has been added successfully.
+        Displays a floating notification indicating that the salary update was successful.
         """
         try:
             notif = FloatingNotification(
-                "Thêm lương thành công!",
+                "Sửa lương thành công!",
                 parent=self.parent_stack,
                 bg_color="#28a745",  # Màu xanh lá
                 icon_path=r"C:\Project_Python\applications\Student-Manager\app\assets\ok.png",
             )
             notif.show_bottom_center()
-            logger.info("Floating notification displayed for salary addition.")
+            logger.info("Floating notification displayed.")
         except Exception as e:
             logger.error("Error displaying floating notification: %s", e)
 
@@ -155,4 +172,5 @@ class AddSalaryPage(QWidget):
             self.parent_stack.setCurrentIndex(TEACHER_SALARY_PAGE_ID)
             logger.info("Navigated back to teacher salary management page.")
         else:
-            logger.error("Parent stack not provided; cannot navigate back.")
+            logger.error("Parent stack not available; cannot navigate back.")
+
