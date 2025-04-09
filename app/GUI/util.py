@@ -279,17 +279,47 @@ class formPage(QWidget):
         # Sắp xếp bảng theo cột đã chọn (theo thứ tự tăng dần)
         self.table.sortItems(col_index, Qt.AscendingOrder)
         print(f"Bảng đã được sắp xếp theo {selected_field} (tăng dần).")
+    
+    def get_new_data(self) -> None:
+        #ghi đè hàm này để lấy dữ liệu mới từ sql
+        #trả về dữ liệu mới cho bảng
+        #Ví dụ: return get_right_table_data_form(get_preview_data(GET_PREVIEW_STUDENT_DATA_QUERY))
+        return
 
     def refresh_table(self):
+        """Làm mới bảng với dữ liệu mới hoặc dữ liệu mẫu ban đầu."""
         """Làm mới bảng: xóa nội dung tìm kiếm và hiển thị lại tất cả các dòng."""
+        new_data = self.get_new_data()
+        self.sample_data = new_data if new_data else self.sample_data
         self.search_input.clear()
-        for row in range(self.table.rowCount()):
+         # Xác định số cột và header dựa trên field
+        if self.field and self.field[0].strip().lower() == "chọn":
+            num_cols = len(self.field)
+            headers = self.field
+        else:
+            num_cols = 1 + len(self.field)
+            headers = ["Chọn"] + self.field
+        self.table.clear()
+        self.table.setColumnCount(num_cols)
+        self.table.setHorizontalHeaderLabels(headers)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setRowCount(len(self.sample_data))
+
+        for row, data_row in enumerate(self.sample_data):
+            # Thêm checkbox vào cột đầu tiên
             checkbox_item = QTableWidgetItem()
             checkbox_item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
             checkbox_item.setCheckState(Qt.Unchecked)
             self.table.setItem(row, 0, checkbox_item)
-            self.table.showRow(row)
+            # Gán dữ liệu cho các cột còn lại
+            for col in range(1, num_cols):
+                data_index = col - 1  # data_row[0] -> bảng cột 1, data_row[1] -> bảng cột 2, ...
+                if data_index < len(data_row):
+                    item = QTableWidgetItem(data_row[data_index])
+                    item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)  # không Editable
+                    self.table.setItem(row, col, item)
         print("Bảng đã được làm mới.")
+
 
     def go_to_add_page(self):
         if self.main_stack:

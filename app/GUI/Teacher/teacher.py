@@ -9,6 +9,7 @@ from functions.functions import get_preview_data
 from sqlQuery import GET_PREVIEW_SALARY_DATA_QUERY, GET_PREVIEW_TEACHER_DATA_QUERY
 
 
+
 # Configure module-level logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -47,6 +48,8 @@ class TeacherPage(formPage):
             filter_fields=["Tên giáo viên", "Năm vào làm việc", "ID"],
             single_select=True
         )
+    def get_new_data(self):
+        return get_right_table_data_form(get_preview_data(GET_PREVIEW_TEACHER_DATA_QUERY))
 
     def go_to_add_page(self):
         """
@@ -119,6 +122,8 @@ class SalaryPage(formPage):
             filter_fields=["ID", "Tên giáo viên", "Lương", "Lương thưởng"],
             single_select=True
         )
+    def get_new_data(self):
+        return get_right_table_data_form(get_preview_data(GET_PREVIEW_SALARY_DATA_QUERY))
 
     def go_to_add_page(self):
         """

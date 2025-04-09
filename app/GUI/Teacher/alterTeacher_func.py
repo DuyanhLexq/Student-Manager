@@ -12,7 +12,7 @@ from functions.functions import get_preview_data
 from sqlQuery import GET_TEACHER_DATA_BY_ID_QUERY
 from datetime import datetime
 from GUI.notification import FloatingNotification
-
+from functions.functions import update_teacher_info
 # Configure module-level logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -36,6 +36,7 @@ class AlterTeacherPage(QWidget):
             teacher_id (str): The teacher's ID to load the data for editing.
         """
         super().__init__()
+        self.teacher_id = teacher_id
         self.parent_stack = parent_stack
         self.teacher_data = None
         if teacher_id:
@@ -128,6 +129,15 @@ class AlterTeacherPage(QWidget):
         self.contract_edit.setDisplayFormat("dd/MM/yyyy")
         self.contract_edit.setCalendarPopup(True)
         self.contract_edit.setFixedHeight(30)
+        label_hometown = QLabel('Quê quán <span style="color:red; font-size:16px;">*</span>')
+        label_hometown.setFont(QFont("Arial", 14))
+        self.hometown_input = QLineEdit()
+        self.hometown_input.setPlaceholderText("Nhập quê quán")
+        self.hometown_input.setFixedHeight(30)
+        row4.addWidget(label_hometown)
+        row4.addWidget(self.hometown_input)
+        layout.addLayout(row4)
+
         if self.teacher_data:
             try:
                 parsed_date = datetime.strptime(self.teacher_data[3], "%Y-%m-%d").date()
@@ -178,11 +188,16 @@ class AlterTeacherPage(QWidget):
         bottom_layout.addWidget(self.add_button)
         layout.addLayout(bottom_layout)
 
+        for btn in [self.back_button, self.add_button]:
+            btn.setCursor(Qt.PointingHandCursor)
+            
+
         # Connect input change events to input validation
         self.name_input.textChanged.connect(self.check_input)
         self.contract_edit.dateChanged.connect(self.check_input)
         self.start_date.dateChanged.connect(self.check_input)
-        self.add_button.clicked.connect(self.add_teacher)
+        self.hometown_input.textChanged.connect(self.check_input)
+        self.add_button.clicked.connect(self.edit_teacher)
 
         logger.info("AlterTeacherPage UI initialized.")
 
@@ -200,7 +215,7 @@ class AlterTeacherPage(QWidget):
             self.add_button.setStyleSheet("background-color: #A9A9A9; color: white; border-radius: 8px")
             logger.debug("Input validation failed; button disabled.")
 
-    def add_teacher(self):
+    def edit_teacher(self):
         """
         Processes the teacher information entered by the user.
         Logs the information and displays a floating notification upon success.
@@ -211,8 +226,21 @@ class AlterTeacherPage(QWidget):
         phone = self.phone_input.text().strip()
         contract = self.contract_edit.date().toString("dd/MM/yyyy")
         start = self.start_date.date().toString("dd/MM/yyyy")
+        hometown = self.hometown_input.text().strip()
+
+        data = [
+            name,
+            phone,
+            hometown,
+            start,
+            contract,
+            dob
+        ]
+        update_teacher_info(self.teacher_id,data)
+
         
         # Log the teacher update information (in a real scenario, this would involve database updates)
+
         logger.info("Updating teacher: %s, %s, %s, %s, %s", name, dob, phone, contract, start)
         
         # Display a floating notification to indicate success

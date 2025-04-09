@@ -1,11 +1,16 @@
 import logging
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-    QGridLayout
+    QGridLayout,QMessageBox
 )
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtCore import Qt, QSize
 from GUI.config import BACK_ICON_PATH, STUDENT_GRADE_PAGE_ID
+from GUI.util import get_right_table_data_form
+from GUI.Student.alterGrades_func import AltergradesPage
+from GUI.Student.addStudent_func import AddStudentPage
+from functions.functions import get_preview_data
+from sqlQuery import CHECK_STUDENT_NAME_QUERY
 from GUI.notification import FloatingNotification
 
 # Logger setup
@@ -93,6 +98,9 @@ class AddGradePage(QWidget):
         # Input change connections for validation
         self.student_name_input.textChanged.connect(self.check_input)
         self.grade_line.textChanged.connect(self.check_input)
+
+        for btn in [self.back_button , self.add_button]:
+            btn.setCursor(Qt.PointingHandCursor)
     
     def check_input(self):
         """
@@ -119,8 +127,48 @@ class AddGradePage(QWidget):
             return
 
         # 👉 TODO: Replace this with actual DB insert logic
-        logger.info(f"Adding grade: Student='{student_name}', Grade={grade}")
-        self.show_notification()
+        student_exists = get_right_table_data_form(get_preview_data(CHECK_STUDENT_NAME_QUERY.format(student_name)))
+        if student_exists:
+            # Nếu học sinh đã có trong hệ thống, hỏi người dùng có muốn sửa điểm không.
+            reply = QMessageBox.question(
+                self,
+                'Sửa điểm?',
+                f"Có vẻ như điểm của học sinh {student_name} đã có trong hệ thống. Bạn có muốn sửa điểm không?. Nếu đây là một học sinh mới, hãy thêm học sinh mới trước khi nhập điểm nhé !😊",
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                QMessageBox.Yes
+            )
+
+            if reply == QMessageBox.Yes:
+                # Chuyển sang trang sửa điểm.
+                add_page = AltergradesPage(parent_stack=self.parent_stack,student_id=student_exists[0][0])
+                self.parent_stack.addWidget(add_page)
+                self.parent_stack.setCurrentWidget(add_page)
+            elif reply == QMessageBox.No:
+                self.show_notification()
+            
+
+                
+
+        else:
+            # Nếu học sinh chưa có trong hệ thống, hỏi người dùng có muốn thêm học sinh mới không.
+            reply = QMessageBox.question(
+                self,
+                'Thêm học sinh mới?',
+                f"Học sinh {student_name} chưa có trong hệ thống. Bạn có muốn thêm học sinh mới không? 😎",
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                QMessageBox.Yes
+            )
+
+            if reply == QMessageBox.Yes:
+                add_page = AddStudentPage(parent_stack=self.parent_stack)
+                self.parent_stack.addWidget(add_page)
+                self.parent_stack.setCurrentWidget(add_page)
+            elif reply == QMessageBox.No:
+                # Hiển thị thông báo và quay lại.
+                self.show_notification()
+
+            logger.info(f"Adding grade: Student='{student_name}', Grade={grade}")
+        
     
     def show_notification(self):
         """

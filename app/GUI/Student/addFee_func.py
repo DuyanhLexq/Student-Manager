@@ -1,11 +1,16 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-    QListWidget, QDialog, QDialogButtonBox, QListWidgetItem, QFrame,QGridLayout,QComboBox
+    QListWidget, QDialog, QDialogButtonBox, QListWidgetItem, QFrame,QGridLayout,QComboBox,QMessageBox
 )
 from PyQt5.QtGui import QFont,QIcon
 from PyQt5.QtCore import Qt, QTimer,QSize
 from GUI.config import BACK_ICON_PATH,STUDENT_FEE_PAGE_ID
 from GUI.notification import FloatingNotification
+from GUI.util import get_right_table_data_form
+from functions.functions import get_preview_data
+from sqlQuery import CHECK_STUDENT_NAME_QUERY
+from GUI.Student.alterFee_func import AlterFeePage
+from GUI.Student.addStudent_func import AddStudentPage
 
 class AddFeePage(QWidget):
     def __init__(self, parent_stack=None):
@@ -53,7 +58,7 @@ class AddFeePage(QWidget):
         label_fee.setFont(QFont("Arial", 14))
         label_fee.setStyleSheet("background: transparent; border: none;")
         self.fee_line = QLineEdit()
-        self.fee_line.setPlaceholderText("Nhập điểm")
+        self.fee_line.setPlaceholderText("Nhập học phí")
         self.fee_line.setFixedHeight(30)
         fee_layout = QHBoxLayout()
         fee_layout.addWidget(self.fee_line)
@@ -91,6 +96,9 @@ class AddFeePage(QWidget):
         self.fee_line.textChanged.connect(self.check_input)
         self.paid_combo.currentTextChanged.connect(self.check_input)
         # Kết nối sự kiện cho các ô nhập liệu
+
+        for btn in [self.back_button, self.add_button]:
+            btn.setCursor(Qt.PointingHandCursor)
         
     
     def check_input(self):
@@ -112,6 +120,45 @@ class AddFeePage(QWidget):
             # Nếu không đủ thông tin, hiển thị thông báo
             print("Vui lòng nhập đầy đủ thông tin.")
             return
+        student_exists = get_right_table_data_form(get_preview_data(CHECK_STUDENT_NAME_QUERY.format(student_name)))
+        if student_exists:
+            # Nếu học sinh đã có trong hệ thống, hỏi người dùng có muốn sửa điểm không.
+            reply = QMessageBox.question(
+                self,
+                'Sửa điểm?',
+                f"Có vẻ như điểm của học sinh {student_name} đã có trong hệ thống. Bạn có muốn sửa học phí không?. Nếu đây là một học sinh mới, hãy thêm học sinh mới trước khi nhập học phí nhé !😊",
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                QMessageBox.Yes
+            )
+
+            if reply == QMessageBox.Yes:
+                # Chuyển sang trang sửa học phí.
+                add_page = AlterFeePage(parent_stack=self.parent_stack,student_id=student_exists[0][0])
+                self.parent_stack.addWidget(add_page)
+                self.parent_stack.setCurrentWidget(add_page)
+            elif reply == QMessageBox.No:
+                self.show_notification()
+            
+
+                
+
+        else:
+            # Nếu học sinh chưa có trong hệ thống, hỏi người dùng có muốn thêm học sinh mới không.
+            reply = QMessageBox.question(
+                self,
+                'Thêm học sinh mới?',
+                f"Học sinh {student_name} chưa có trong hệ thống. Bạn có muốn thêm học sinh mới không? 😎",
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                QMessageBox.Yes
+            )
+
+            if reply == QMessageBox.Yes:
+                add_page = AddStudentPage(parent_stack=self.parent_stack)
+                self.parent_stack.addWidget(add_page)
+                self.parent_stack.setCurrentWidget(add_page)
+            elif reply == QMessageBox.No:
+                # Hiển thị thông báo và quay lại.
+                self.show_notification()
         print(f"Thêm Học phí: {student_name}, Học phí: {fee}, Đã đóng: {paid}")
         # Gọi hàm thêm học phí vào cơ sở dữ liệu ở đây
         self.show_notification()

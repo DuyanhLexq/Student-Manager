@@ -12,7 +12,7 @@ from sqlQuery import GET_CLASS_DATA_BY_ID_QUERY
 from GUI.notification import FloatingNotification
 from GUI.Student.studentSelector import StudentSelectorDialog
 from GUI.Teacher.teacherSelector import TeacherSelectorDialog
-
+from functions.functions import update_class_info
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -33,11 +33,14 @@ class AlterClassPage(QWidget):
         """
         super().__init__()
         self.parent_stack = parent_stack
+        self.class_id = class_id
 
         # Fetch class data from database if class_id is provided
         self.class_data = get_right_table_data_form(
             get_preview_data(GET_CLASS_DATA_BY_ID_QUERY.format(class_id))
         )[0] if class_id else None
+
+        
 
         # Extract teacher and student IDs
         self.teacher_id = self.class_data[3] if self.class_data else None
@@ -132,6 +135,9 @@ class AlterClassPage(QWidget):
         # Enable save button only if class name and teacher are selected
         self.class_name_input.textChanged.connect(self.check_input)
 
+        for btn in [self.back_button, self.edit_button]:
+            btn.setCursor(Qt.PointingHandCursor)
+
     def check_input(self):
         """
         Enables or disables the edit button depending on input validity.
@@ -178,10 +184,19 @@ class AlterClassPage(QWidget):
         Handles the logic for editing the class and shows a success notification.
         """
         class_name = self.class_name_input.text().strip()
-        teacher = self.selected_teacher
-        students = self.selected_students
+        teacher = self.selected_teacher # id giáo viên
+        len_students = len(self.selected_students)
 
-        logger.info(f"Editing class: {class_name}, Teacher ID: {teacher}, Student IDs: {students}")
+        data = [
+            class_name,
+            len_students,
+            teacher
+
+        ]
+        update_class_info(self.class_id,data,student_ids = self.selected_students)
+        
+
+        logger.info(f"Editing class: {class_name}, Teacher ID: {teacher}, Student nums: {len_students}")
         
         # Placeholder for actual database update
         self.show_notification()

@@ -20,7 +20,8 @@ INSERT INTO students (student_name, phone, parent_phone, parent_name, hometown, 
 ('Vũ Thị Hà', '0987654321', '0918273645', 'Vũ Văn Hải', 'Đà Nẵng', 'Số 8 Đường RTY, Đà Nẵng', '2010-12-25', 'Nữ', 2),
 ('Phan Văn Hoàng', '0975314682', '0987123456', 'Phan Thị Hồng', 'Hà Nội', 'Số 10 Đường UVW, Hà Nội', '2011-06-15', 'Nam', 3),
 ('Lý Thị Mai', '0963258741', '0912345678', 'Lý Văn Minh', 'TP HCM', 'Số 12 Đường OPQ, TP HCM', '2008-04-30', 'Nữ', 3),
-('Đỗ Văn Sơn', '0936251478', '0978123456', 'Đỗ Thị Lan', 'Hải Phòng', 'Số 15 Đường ASD, Hải Phòng', '2009-09-09', 'Nam', 3);
+('Đỗ Văn Sơn', '0936251478', '0978123456', 'Đỗ Thị Lan', 'Hải Phòng', 'Số 15 Đường ASD, Hải Phòng', '2009-09-09', 'Nam', 3),
+('Trịnh Thu Thủy', '0936251478', '0978123456', 'Đỗ Thị Lan', 'Hải Phòng', 'Số 15 Đường ASD, Hải Phòng', '2009-09-09', 'Nữ', NULL);
 
 -- Chèn dữ liệu lương giáo viên
 INSERT INTO salary (teacher_id, salary, bonus_salary) VALUES

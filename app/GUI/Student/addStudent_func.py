@@ -5,9 +5,10 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QFont,QIcon
 from PyQt5.QtCore import Qt, QDate, QTimer,QSize
 from GUI.config import BACK_ICON_PATH,STUDENT_PAGE_ID
+from functions.functions import add_new_student
 
 class AddStudentPage(QWidget):
-    def __init__(self, parent_stack=None):
+    def __init__(self, parent_stack=None,current_student_number = None):
         """
         parent_stack: QStackedWidget chứa các trang của ứng dụng,
                       dùng để chuyển trang quay lại.
@@ -98,25 +99,16 @@ class AddStudentPage(QWidget):
         form_layout.addWidget(label_residence, 3, 0)
         form_layout.addWidget(self.residence_input, 3, 1, 1, 3)
         
-        # Hàng 5: Họ tên bố (*) và Họ tên mẹ (*)
-        label_father = QLabel('Họ tên bố <span style="color:red; font-size:16px;">*</span>')
-        label_father.setFont(QFont("Arial", 14))
-        label_father.setStyleSheet("background: transparent; border: none;")
-        self.father_input = QLineEdit()
-        self.father_input.setPlaceholderText("Nhập họ tên bố")
-        self.father_input.setFixedHeight(30)
+       # Hàng 5: Họ tên bố (*) và Họ tên mẹ (*)
+        label_parent = QLabel('Họ tên phụ huynh')
+        label_parent.setFont(QFont("Arial", 14))
+        label_parent.setStyleSheet("background: transparent; border: none;")
+        self.parent_input = QLineEdit()
+        self.parent_input.setPlaceholderText("Nhập họ tên phụ huynh")
+        self.parent_input.setFixedHeight(30)
         
-        label_mother = QLabel('Họ tên mẹ <span style="color:red; font-size:16px;">*</span>')
-        label_mother.setFont(QFont("Arial", 14))
-        label_mother.setStyleSheet("background: transparent; border: none;")
-        self.mother_input = QLineEdit()
-        self.mother_input.setPlaceholderText("Nhập họ tên mẹ")
-        self.mother_input.setFixedHeight(30)
-        
-        form_layout.addWidget(label_father, 4, 0)
-        form_layout.addWidget(self.father_input, 4, 1)
-        form_layout.addWidget(label_mother, 4, 2)
-        form_layout.addWidget(self.mother_input, 4, 3)
+        form_layout.addWidget(label_parent, 4, 0)
+        form_layout.addWidget(self.parent_input, 4, 1)
         
         # Hàng 6: Số điện thoại (không bắt buộc) và Số điện thoại phụ huynh (không bắt buộc)
         label_phone = QLabel("Số điện thoại")
@@ -157,38 +149,52 @@ class AddStudentPage(QWidget):
         self.name_input.textChanged.connect(self.check_input)
         self.hometown_input.textChanged.connect(self.check_input)
         self.residence_input.textChanged.connect(self.check_input)
-        self.father_input.textChanged.connect(self.check_input)
-        self.mother_input.textChanged.connect(self.check_input)
-        
+        self.parent_input.textChanged.connect(self.check_input)
         # Nút Thêm được kết nối sự kiện
         self.add_button.clicked.connect(self.add_student)
+
+        for btn in [self.back_button, self.add_button]:
+            btn.setCursor(Qt.PointingHandCursor)
     
     def check_input(self):
         # Các ô bắt buộc: Tên học sinh, Quê Quán, Tạm trú, Họ tên bố, Họ tên mẹ
         if (self.name_input.text().strip() and
             self.hometown_input.text().strip() and
             self.residence_input.text().strip() and
-            self.father_input.text().strip() and
-            self.mother_input.text().strip()):
+            self.parent_input.text().strip()):
             self.add_button.setEnabled(True)
             self.add_button.setStyleSheet("background-color: #007BFF; color: white; border: none;")
         else:
             self.add_button.setEnabled(False)
             self.add_button.setStyleSheet("background-color: #A9A9A9; color: white; border: none;")
     
+    
     def add_student(self):
         # Lấy thông tin từ các ô nhập
         name = self.name_input.text().strip()
         gender = self.gender_combo.currentText()
-        dob = self.dob_edit.date().toString("dd/MM/yyyy")
+        dob = self.dob_edit.date().toString("yyyy-MM-dd")
+        # Chuyển đổi định dạng ngày tháng về yyyy-MM-dd
         hometown = self.hometown_input.text().strip()
         residence = self.residence_input.text().strip()
-        father = self.father_input.text().strip()
-        mother = self.mother_input.text().strip()
+        parent_name = self.parent_input.text().strip()
         phone = self.phone_input.text().strip()
         parent_phone = self.parent_phone_input.text().strip()
+
+        data = [
+            name,
+            phone,
+            parent_phone,
+            parent_name,
+            hometown,
+            residence,
+            dob,
+            gender,
+        ]
+        add_new_student(data)
+
         
-        print(f"Thêm học sinh: {name}, {gender}, {dob}, {hometown}, {residence}, {father}, {mother}, {phone}, {parent_phone}")
+        print(f"Thêm học sinh: {name}, {gender}, {dob}, {hometown}, {residence}, {parent_name}, {phone}, {parent_phone}")
         self.show_notification()
     
     def show_notification(self):

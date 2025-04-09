@@ -44,6 +44,9 @@ class classPage(formPage):
             search_text="Tìm kiếm học sinh",
             filter_fields=["ID", "Tên", "Số lượng học sinh", "Ngày tạo"]
         )
+    
+    def get_new_data(self):
+        return get_right_table_data_form(get_preview_data(GET_PREVIEW_CLASSES_DATA_QUERY))
 
     def go_to_add_page(self):
         """

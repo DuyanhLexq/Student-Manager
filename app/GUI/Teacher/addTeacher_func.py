@@ -6,6 +6,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QFont,QIcon
 from PyQt5.QtCore import Qt, QDate, QTimer,QSize
 from GUI.config import BACK_ICON_PATH,TEACHER_PAGE_ID
+from functions.functions import add_new_teacher
+
 class AddTeacherPage(QWidget):
     def __init__(self, parent_stack=None):
         super().__init__()
@@ -74,18 +76,15 @@ class AddTeacherPage(QWidget):
         self.contract_edit.setDisplayFormat("dd/MM/yyyy")
         self.contract_edit.setCalendarPopup(True)
         self.contract_edit.setFixedHeight(30)
-        self.contract_edit.setDate(QDate.currentDate())
-        row4.addWidget(label_contract)
-        row4.addWidget(self.contract_edit)
-        
-        label_salary = QLabel('Lương <span style="color:red; font-size:16px;">*</span>')
-        label_salary.setFont(QFont("Arial", 14))
-        self.salary_input = QLineEdit()
-        self.salary_input.setPlaceholderText("Nhập lương")
-        self.salary_input.setFixedHeight(30)
-        row4.addWidget(label_salary)
-        row4.addWidget(self.salary_input)
+        label_hometown = QLabel('Quê quán <span style="color:red; font-size:16px;">*</span>')
+        label_hometown.setFont(QFont("Arial", 14))
+        self.hometown_input = QLineEdit()
+        self.hometown_input.setPlaceholderText("Nhập quê quán")
+        self.hometown_input.setFixedHeight(30)
+        row4.addWidget(label_hometown)
+        row4.addWidget(self.hometown_input)
         layout.addLayout(row4)
+        
         
         # Row 5: Ngày vào nhận việc (*)
         row5 = QHBoxLayout()
@@ -116,13 +115,16 @@ class AddTeacherPage(QWidget):
         # Kết nối sự kiện để kiểm tra các trường bắt buộc
         self.name_input.textChanged.connect(self.check_input)
         self.contract_edit.dateChanged.connect(self.check_input)
-        self.salary_input.textChanged.connect(self.check_input)
+        self.hometown_input.textChanged.connect(self.check_input)
         self.start_date.dateChanged.connect(self.check_input)
         self.add_button.clicked.connect(self.add_teacher)
+
+        for btn in [self.back_button, self.add_button]:
+            btn.setCursor(Qt.PointingHandCursor)
     
     def check_input(self):
         # Các trường bắt buộc: Tên, Ngày hết hạn hợp đồng, Lương, Ngày vào nhận việc
-        if self.name_input.text().strip() and self.salary_input.text().strip():
+        if self.name_input.text().strip() and self.hometown_input.text().strip():
             self.add_button.setEnabled(True)
             self.add_button.setStyleSheet("background-color: #007BFF; color: white;border-radius: 8px")
         else:
@@ -134,9 +136,18 @@ class AddTeacherPage(QWidget):
         dob = self.dob_edit.date().toString("dd/MM/yyyy")
         phone = self.phone_input.text().strip()
         contract = self.contract_edit.date().toString("dd/MM/yyyy")
-        salary = self.salary_input.text().strip()
+        hometown = self.hometown_input.text().strip()
         start = self.start_date.date().toString("dd/MM/yyyy")
-        print(f"Thêm giáo viên: {name}, {dob}, {phone}, {contract}, {salary}, {start}")
+        data = [
+            name,
+            phone,
+            hometown,
+            start,
+            contract,
+            dob
+        ]
+        add_new_teacher(data)
+        print(f"Thêm giáo viên: {name}, {dob}, {phone}, {contract}, {hometown}, {start}")
         self.show_notification()
     
     def show_notification(self):

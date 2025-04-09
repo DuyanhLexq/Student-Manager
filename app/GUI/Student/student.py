@@ -178,6 +178,9 @@ class StudentPage(formPage):
             filter_fields=["ID", "Tên", "Giới tính", "Ngày sinh"],
             single_select=True
         )
+    def get_new_data(self):
+        return get_right_table_data_form(get_preview_data(GET_PREVIEW_STUDENT_DATA_QUERY))
+    
     
     def delete(self):
         """
@@ -243,6 +246,9 @@ class GradesPage(formPage):
             single_select=True
         )
     
+    def get_new_data(self):
+        return get_right_table_data_form(get_preview_data(GET_GRADES_DATA_QUERY))
+    
     def go_to_add_page(self):
         """
         Navigates to the AddGradePage.
@@ -306,6 +312,11 @@ class TuitionPage(formPage):
             filter_fields=["ID", "Tên", "Học phí"],
             single_select=True
         )
+    
+    def get_new_data(self):
+        return get_right_table_data_form(get_preview_data(GET_TUITION_DATA_QUERY))
+    
+
     
     def go_to_add_page(self):
         """

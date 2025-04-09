@@ -161,6 +161,9 @@ class AlterStudentPage(QWidget):
         
         # Nút Thêm được kết nối sự kiện
         self.add_button.clicked.connect(self.add_student)
+
+        for btn in [self.back_button, self.add_button]:
+            btn.setCursor(Qt.PointingHandCursor)
     
     def check_input(self):
         # Các ô bắt buộc: Tên học sinh, Quê Quán, Tạm trú, Họ tên bố, Họ tên mẹ

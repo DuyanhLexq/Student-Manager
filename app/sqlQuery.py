@@ -111,15 +111,14 @@ GET_CLASS_DATA_BY_ID_QUERY = """
         GROUP_CONCAT(students.student_id)
     FROM 
         classes
-    JOIN 
+    LEFT JOIN 
         teachers ON classes.teacher_id = teachers.teacher_id
-    JOIN 
+    LEFT JOIN 
         students ON students.class_id = classes.class_id
     WHERE 
         classes.class_id = {}
     GROUP BY 
         classes.class_id;
-
 """
 
 GET_SALARY_DATA_BY_ID_QUERY = """
@@ -134,3 +133,153 @@ GET_SALARY_DATA_BY_ID_QUERY = """
     WHERE 
         teachers.teacher_id = {};
 """
+
+CHECK_STUDENT_NAME_QUERY = """
+    SELECT 
+        student_id
+    FROM 
+        students
+    WHERE 
+        student_name = '{}'
+    ORDER BY 
+        student_id ASC
+    LIMIT 1;
+"""
+CHECK_TEACHER_NAME_QUERY =  """
+    SELECT 
+        teacher_id
+    FROM 
+        teachers
+    WHERE 
+        teacher_name = '{}'
+    ORDER BY 
+        teacher_id ASC
+    LIMIT 1;
+"""
+
+ADD_STUDENT_QUERY = """
+    INSERT INTO students (
+        student_name, 
+        phone, 
+        parent_phone, 
+        parent_name, 
+        hometown, 
+        temporary_address, 
+        birth_date, 
+        gender, 
+        class_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+"""
+
+ADD_SCORE_QUERY = """
+    INSERT INTO scores (student_id, score)
+    VALUES (?, ?)
+"""
+
+ADD_TUITION_QUERY = """
+    INSERT INTO tuition (student_id, fee, paid)
+    VALUES (?, ?, ?)
+"""
+ADD_TEACHER_QUERY = """
+    INSERT INTO teachers (
+        teacher_name, 
+        phone, 
+        hometown, 
+        start_date, 
+        contract_end_date, 
+        birth_date
+    ) VALUES (?, ?, ?, ?, ?, ?);
+"""
+
+ADD_SALARY_QUERY = """
+    INSERT INTO salary (
+        teacher_id,
+        salary,
+        bonus_salary
+    ) VALUES (?, ?, ?);
+"""
+ADD_CLASS_QUERY = """
+    INSERT INTO classes (
+        class_name,
+        creation_date,
+        student_count,
+        teacher_id
+    ) VALUES (?, ?, ?, ?);
+"""
+ASSIGN_STUDENTS_TO_CLASS_QUERY = """
+UPDATE students
+SET class_id = ?
+WHERE student_id IN ({});
+"""
+
+UPDATE_STUDENT_QUERY = """
+    UPDATE students
+    SET 
+        student_name = ?,
+        phone = ?,
+        parent_phone = ?,
+        parent_name = ?,
+        hometown = ?,
+        temporary_address = ?,
+        birth_date = ?,
+        gender = ?
+    WHERE student_id = ?;
+"""
+
+UPDATE_TUITION_QUERY = """
+    UPDATE tuition
+    SET 
+        fee = ?,
+        paid = ?
+    WHERE student_id = ?;
+"""
+UPDATE_GRADE_QUERY = """
+    UPDATE scores
+    SET 
+        score = ?
+    WHERE student_id = ?;
+"""
+
+UPDATE_TEACHER_QUERY = """
+    UPDATE teachers
+    SET 
+        teacher_name = ?,
+        phone = ?,
+        hometown = ?,
+        start_date = ?,
+        contract_end_date = ?,
+        birth_date = ?
+    WHERE teacher_id = ?;
+
+"""
+
+UPDATE_SALARY_QUERY = """
+    UPDATE salary
+    SET 
+        salary = ?,
+        bonus_salary = ?
+    WHERE teacher_id = ?;
+"""
+
+UPDATE_CLASS_AND_STUDENTS_QUERY = {
+    "update_class": """
+        UPDATE classes
+        SET class_name = ?, student_count = ?, teacher_id = ?
+        WHERE class_id = ?;
+    """,
+    "assign_students_to_class": """
+        UPDATE students
+        SET class_id = ?
+        WHERE student_id IN ({student_ids});
+    """,
+    "unassign_students_not_in_list": """
+        UPDATE students
+        SET class_id = NULL
+        WHERE class_id = ? AND student_id NOT IN ({student_ids});
+    """,
+    "remove_all_students_from_class": """
+        UPDATE students
+        SET class_id = NULL
+        WHERE class_id = ?;
+    """
+}

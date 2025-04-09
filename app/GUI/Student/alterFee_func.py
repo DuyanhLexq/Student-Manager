@@ -11,6 +11,7 @@ from sqlQuery import GET_TUITION_DATA_BY_ID_QUERY
 from GUI.util import get_right_table_data_form
 from functions.functions import get_preview_data
 from GUI.notification import FloatingNotification
+from functions.functions import update_student_tuition
 
 # Configure module-level logging
 logging.basicConfig(level=logging.INFO)
@@ -36,6 +37,7 @@ class AlterFeePage(QWidget):
         """
         super().__init__()
         self.parent_stack = parent_stack
+        self.student_id = student_id
         try:
             raw_data = get_preview_data(GET_TUITION_DATA_BY_ID_QUERY.format(student_id))
             fee_list = get_right_table_data_form(raw_data)
@@ -127,6 +129,9 @@ class AlterFeePage(QWidget):
         self.student_name_input.textChanged.connect(self.check_input)
         self.fee_line.textChanged.connect(self.check_input)
         self.paid_combo.currentTextChanged.connect(self.check_input)
+
+        for btn in [self.back_button, self.edit_button]:
+            btn.setCursor(Qt.PointingHandCursor)
         
         logger.info("AlterFeePage UI initialized.")
 
@@ -152,12 +157,19 @@ class AlterFeePage(QWidget):
         student_name = self.student_name_input.text().strip()
         fee = self.fee_line.text().strip()
         paid = self.paid_combo.currentText()
+        paid = True if paid == "Đã đóng" else False
         
         # Check if required fields are provided (this is a safeguard)
         if not student_name or not fee or not paid:
             logger.warning("Insufficient information to update tuition fee.")
             print("Vui lòng nhập đầy đủ thông tin.")
             return
+        data = [
+            fee,
+            paid
+        ]
+        
+        update_student_tuition(self.student_id,data)
         
         logger.info("Sửa Học phí: %s, Học phí: %s, Đã đóng: %s", student_name, fee, paid)
         # Here, update the fee data in the database as needed.

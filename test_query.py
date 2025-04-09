@@ -1,25 +1,17 @@
 
-GET_CLASS_DATA_BY_ID_QUERY = """
+GET_PREVIEW_CLASSES_DATA_QUERY = """
     SELECT 
-        classes.class_name,
-        classes.student_count,
-        classes.creation_date,
-        classes.teacher_id,
-        GROUP_CONCAT(students.student_id)
+        class_id,
+        class_name,
+        student_count,
+        creation_date
     FROM 
-        classes
-    JOIN 
-        teachers ON classes.teacher_id = teachers.teacher_id
-    JOIN 
-        students ON students.class_id = classes.class_id
-    WHERE 
-        classes.class_id = {}
-    GROUP BY 
-        classes.class_id;
-
+        classes;
 """
 
+
 import sqlite3
+from typing import List
 def open_db_connection():
     """
     Open a connection to the SQLite database.
@@ -53,5 +45,13 @@ def get_preview_data(QUERY:str):
         conn.close()
         return []
 
-print(get_preview_data(GET_CLASS_DATA_BY_ID_QUERY.format(1)))
+def get_right_table_data_form(data: List[tuple[str]]) -> List[List[str]]:
+    res = []
+    for dt in data:
+        accurate_data = list(map(lambda value: str(value), dt))
+        res.append(accurate_data)
+    return res
+
+
+print(get_right_table_data_form(get_preview_data(GET_PREVIEW_CLASSES_DATA_QUERY)))
     

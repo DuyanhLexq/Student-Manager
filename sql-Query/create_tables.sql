@@ -27,7 +27,7 @@ CREATE TABLE students (
     temporary_address VARCHAR(255) NOT NULL,
     birth_date DATE NOT NULL,
     gender VARCHAR(10) NOT NULL,
-    class_id INT NOT NULL,
+    class_id INT,
     FOREIGN KEY (class_id) REFERENCES classes(class_id)
 );
 
@@ -35,21 +35,21 @@ CREATE TABLE students (
 CREATE TABLE salary (
     teacher_id INT NOT NULL,
     salary DECIMAL(10,2) NOT NULL,
-    bonus_salary DECIMAL(10,2) NOT NULL,
+    bonus_salary DECIMAL(10,2),
     FOREIGN KEY (teacher_id) REFERENCES teachers(teacher_id)
 );
 
 -- Tạo bảng điểm
 CREATE TABLE scores (
     student_id INT NOT NULL,
-    score DECIMAL(5,2) NOT NULL,
+    score DECIMAL(5,2),
     FOREIGN KEY (student_id) REFERENCES students(student_id)
 );
 
 -- Tạo bảng học phí
 CREATE TABLE tuition (
     student_id INT NOT NULL,
-    fee DECIMAL(10,2) NOT NULL,
-    paid BOOLEAN NOT NULL,
+    fee DECIMAL(10,2),
+    paid BOOLEAN,
     FOREIGN KEY (student_id) REFERENCES students(student_id)
 );

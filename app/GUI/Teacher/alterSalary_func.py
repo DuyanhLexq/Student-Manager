@@ -11,6 +11,7 @@ from GUI.util import get_right_table_data_form
 from functions.functions import get_preview_data
 from sqlQuery import GET_SALARY_DATA_BY_ID_QUERY
 from GUI.notification import FloatingNotification
+from functions.functions import update_teacher_salary
 
 # Configure module-level logging
 logging.basicConfig(level=logging.INFO)
@@ -37,6 +38,7 @@ class AlterSalaryPage(QWidget):
         """
         super().__init__()
         self.parent_stack = parent_stack
+        self.teacher_id = teacher_id
         try:
             raw_data = get_preview_data(GET_SALARY_DATA_BY_ID_QUERY.format(teacher_id))
             salary_list = get_right_table_data_form(raw_data)
@@ -107,14 +109,17 @@ class AlterSalaryPage(QWidget):
         # Bottom layout: "Sửa" button
         bottom_layout = QHBoxLayout()
         bottom_layout.addStretch()
-        self.add_button = QPushButton("Sửa")
-        self.add_button.setFixedSize(150, 40)
-        self.add_button.setFont(QFont("Arial", 14))
-        self.add_button.setEnabled(True)
-        self.add_button.setStyleSheet("background-color: #007BFF; color: white; border-radius: 8px")
-        self.add_button.clicked.connect(self.add_salary)
-        bottom_layout.addWidget(self.add_button)
+        self.edit_button = QPushButton("Sửa")
+        self.edit_button.setFixedSize(150, 40)
+        self.edit_button.setFont(QFont("Arial", 14))
+        self.edit_button.setEnabled(True)
+        self.edit_button.setStyleSheet("background-color: #007BFF; color: white; border-radius: 8px")
+        self.edit_button.clicked.connect(self.edit_salary)
+        bottom_layout.addWidget(self.edit_button)
         layout.addLayout(bottom_layout)
+
+        for btn in [self.back_button, self.edit_button]:
+            btn.setCursor(Qt.PointingHandCursor)
 
         # Connect signals for input validation
         self.name_input.textChanged.connect(self.check_input)
@@ -128,15 +133,15 @@ class AlterSalaryPage(QWidget):
         Enables or disables the submit button accordingly.
         """
         if self.name_input.text().strip() and self.salary_input.text().strip():
-            self.add_button.setEnabled(True)
-            self.add_button.setStyleSheet("background-color: #007BFF; color: white; border-radius: 8px")
+            self.edit_button.setEnabled(True)
+            self.edit_button.setStyleSheet("background-color: #007BFF; color: white; border-radius: 8px")
             logger.debug("Input validation passed; button enabled.")
         else:
-            self.add_button.setEnabled(False)
-            self.add_button.setStyleSheet("background-color: #A9A9A9; color: white; border-radius: 8px")
+            self.edit_button.setEnabled(False)
+            self.edit_button.setStyleSheet("background-color: #A9A9A9; color: white; border-radius: 8px")
             logger.debug("Input validation failed; button disabled.")
 
-    def add_salary(self):
+    def edit_salary(self):
         """
         Processes the salary information entered by the user.
         Logs the information and displays a floating notification upon success.
@@ -144,6 +149,11 @@ class AlterSalaryPage(QWidget):
         name = self.name_input.text().strip()
         salary = self.salary_input.text().strip()
         bonus = self.bonus_input.text().strip()
+        data = [
+            salary,
+            bonus
+        ]
+        update_teacher_salary(self.teacher_id,data)
         logger.info("Sửa lương: %s, %s, %s", name, salary, bonus)
         # Here you can add the logic to update the salary in the database.
         self.show_notification()

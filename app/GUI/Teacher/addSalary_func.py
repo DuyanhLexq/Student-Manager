@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 import logging
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,QMessageBox
 )
 from PyQt5.QtGui import QFont, QIcon
-from PyQt5.QtCore import QSize
+from PyQt5.QtCore import QSize,Qt
 from GUI.config import BACK_ICON_PATH, TEACHER_SALARY_PAGE_ID
 from GUI.notification import FloatingNotification
+from GUI.util import get_right_table_data_form
+from functions.functions import get_preview_data
+from sqlQuery import  CHECK_TEACHER_NAME_QUERY
+from GUI.Teacher.alterSalary_func import AlterSalaryPage
+from GUI.Teacher.addTeacher_func import AddTeacherPage
 
 # Configure module-level logging
 logging.basicConfig(level=logging.INFO)
@@ -102,6 +107,8 @@ class AddSalaryPage(QWidget):
         # Connect signals for input validation
         self.name_input.textChanged.connect(self.check_input)
         self.salary_input.textChanged.connect(self.check_input)
+        for btn in [self.back_button, self.add_button]:
+            btn.setCursor(Qt.PointingHandCursor)
         
         logger.info("AddSalaryPage UI initialized.")
 
@@ -127,9 +134,48 @@ class AddSalaryPage(QWidget):
         name = self.name_input.text().strip()
         salary = self.salary_input.text().strip()
         bonus = self.bonus_input.text().strip()
+        teachers_exists = get_right_table_data_form(get_preview_data(CHECK_TEACHER_NAME_QUERY.format(name)))
+        if teachers_exists:
+            # Nếu học sinh đã có trong hệ thống, hỏi người dùng có muốn sửa điểm không.
+            reply = QMessageBox.question(
+                self,
+                'Sửa lương?',
+                f"Có vẻ như lương của giáo viên {name} đã có trong hệ thống. Bạn có muốn sửa không?. Nếu đây là một giáo viên mới, hãy thêm  trước khi nhập lương nhé !😊",
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                QMessageBox.Yes
+            )
+
+            if reply == QMessageBox.Yes:
+                # Chuyển sang trang sửa lương.
+                add_page = AlterSalaryPage(parent_stack=self.parent_stack,teacher_id=teachers_exists[0][0])
+                self.parent_stack.addWidget(add_page)
+                self.parent_stack.setCurrentWidget(add_page)
+            elif reply == QMessageBox.No:
+                self.show_notification()
+            
+
+                
+
+        else:
+            # Nếu học sinh chưa có trong hệ thống, hỏi người dùng có muốn thêm học sinh mới không.
+            reply = QMessageBox.question(
+                self,
+                'Thêm giáo viên?',
+                f"Giáo viên {name} chưa có trong hệ thống. Bạn có muốn thêm  mới không? 😎",
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                QMessageBox.Yes
+            )
+
+            if reply == QMessageBox.Yes:
+                add_page = AddTeacherPage(parent_stack=self.parent_stack)
+                self.parent_stack.addWidget(add_page)
+                self.parent_stack.setCurrentWidget(add_page)
+            elif reply == QMessageBox.No:
+                # Hiển thị thông báo và quay lại.
+                self.show_notification()
+
         logger.info("Thêm lương: %s, %s, %s", name, salary, bonus)
         # Here you would typically insert the salary data into the database.
-        self.show_notification()
 
     def show_notification(self):
         """

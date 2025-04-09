@@ -3,11 +3,11 @@ from PyQt5.QtWidgets import (
     QListWidget, QDialog, QDialogButtonBox, QListWidgetItem, QFrame,QGridLayout
 )
 from PyQt5.QtGui import QFont,QIcon
-from PyQt5.QtCore import Qt, QTimer,QSize
+from PyQt5.QtCore import Qt, QTimer,QSize,QDate
 from GUI.config import BACK_ICON_PATH,CLASS_PAGE_ID
 from GUI.Student.studentSelector import StudentSelectorDialog
 from GUI.Teacher.teacherSelector import TeacherSelectorDialog
-
+from functions.functions import add_new_class
 class AddClassPage(QWidget):
     def __init__(self, parent_stack=None):
         super().__init__()
@@ -95,9 +95,15 @@ class AddClassPage(QWidget):
         self.add_button.setStyleSheet("background-color: #A9A9A9; color: white; border-radius: 8px;")
         self.add_button.clicked.connect(self.add_class)
         main_layout.addWidget(self.add_button, alignment=Qt.AlignRight)
+
+        #lấy ngày tạo hiện tại
+        self.create_date = QDate.currentDate().toString("yyyy-MM-dd")
         
         # Kiểm tra điều kiện: tên lớp và giáo viên phải được nhập/chọn
         self.class_name_input.textChanged.connect(self.check_input)
+
+        for btn in [self.back_button, self.add_button]:
+            btn.setCursor(Qt.PointingHandCursor)
     
     def check_input(self):
         if self.class_name_input.text().strip() and self.selected_teacher:
@@ -112,10 +118,10 @@ class AddClassPage(QWidget):
         if dialog.exec_() == QDialog.Accepted:
             selected = dialog.get_selection()  # trả về danh sách các dòng (mỗi dòng là list)
             if selected:
-                # Giả sử hiển thị cột "Tên học sinh" (index 1)
-                names = [row[1] for row in selected]
-                self.selected_students = names
-                self.students_line.setText(", ".join(names))
+                # Giả sử hiển thị cột ID học sinh (index 0)
+                _ids = [row[0] for row in selected]
+                self.selected_students = _ids
+                self.students_line.setText(", ".join(_ids))
             else:
                 self.students_line.setText("Chưa chọn học sinh")
     
@@ -124,8 +130,8 @@ class AddClassPage(QWidget):
         if dialog.exec_() == QDialog.Accepted:
             selected = dialog.get_selection()  # trả về một list cho dòng được chọn
             if selected:
-                # Giả sử hiển thị cột "Tên giáo viên" (index 1)
-                self.selected_teacher = selected[1]
+                #lấy id giáo viên
+                self.selected_teacher = selected[0]
                 self.teacher_line.setText(self.selected_teacher)
             else:
                 self.teacher_line.setText("Chưa chọn giáo viên")
@@ -133,9 +139,25 @@ class AddClassPage(QWidget):
     
     def add_class(self):
         class_name = self.class_name_input.text().strip()
-        teacher = self.selected_teacher
-        students = self.selected_students
-        print(f"Thêm lớp: {class_name}, Giáo viên: {teacher}, Học sinh: {students}")
+        teacher_id = self.selected_teacher
+        student_count = len(self.selected_students)
+        create_date = self.create_date
+        # Kiểm tra điều kiện: tên lớp và giáo viên phải được nhập/chọn
+        if not class_name or not teacher_id:
+            # Nếu không đủ thông tin, hiển thị thông báo
+            print("Vui lòng nhập đầy đủ thông tin.")
+            return
+        # Gọi hàm thêm lớp học vào cơ sở dữ liệu
+        data = [
+            class_name,
+            create_date,
+            student_count,
+            teacher_id
+        ]
+        add_new_class(data,",".join(self.selected_students))
+
+        # In thông tin lớp học đã thêm (chỉ để kiểm tra, có thể xóa sau)
+        print(f"Thêm lớp: {class_name}, ID Giáo viên: {teacher_id}, số lượng học sinh: {student_count}")
         self.show_notification()
     
     def show_notification(self):

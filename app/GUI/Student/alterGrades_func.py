@@ -11,6 +11,8 @@ from GUI.util import get_right_table_data_form
 from GUI.notification import FloatingNotification
 from functions.functions import get_preview_data
 from datetime import datetime
+from functions.functions import update_student_grade
+
 
 # Configure logger
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +35,7 @@ class AltergradesPage(QWidget):
         """
         super().__init__()
         self.parent_stack = parent_stack
+        self.student_id = student_id
         self.grades_data = get_right_table_data_form(
             get_preview_data(GET_GRADES_DATA_BY_ID_QUERY.format(student_id))
         )[0] if student_id else None
@@ -109,6 +112,9 @@ class AltergradesPage(QWidget):
         self.student_name_input.textChanged.connect(self.check_input)
         self.grade_line.textChanged.connect(self.check_input)
         self.edit_button.clicked.connect(self.edit_grades)
+
+        for btn in [self.back_button, self.edit_button]:
+            btn.setCursor(Qt.PointingHandCursor)
     
     def check_input(self):
         """
@@ -130,7 +136,11 @@ class AltergradesPage(QWidget):
         """
         name = self.student_name_input.text().strip()
         grade = self.grade_line.text().strip()
+        data = [
+            float(grade) if grade else None,
         
+        ]
+        update_student_grade(self.student_id,data)
         logger.info(f"Grade edited for student '{name}', new grade: {grade}")
         self.show_notification()
     
